@@ -1,5 +1,6 @@
 const tools = require('osmium-tools');
 const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const sequelizeUtils = require('sequelize/lib/utils');
 
 const Sugar = require('sugar');
@@ -29,7 +30,7 @@ function crudFactory(db) {
 		read     : async (model, where = {}, first, retVal) =>
 			db.getValues(await crud.readRaw(model, where._removed
 												   ? where
-												   : Object.assign(where, {_removed: {$not: true}}), first), retVal),
+												   : Object.assign(where, {_removed: {[Op.not]: true}}), first), retVal),
 		updateRaw: async (model, what, where) => await db.models[model].update(what, {
 			where: where ? where : {id: what.id}
 		}),
@@ -67,6 +68,7 @@ class DB extends Sequelize {
 			}
 		);
 		this.Sequelize = Sequelize;
+		this.Op = Op;
 		this.sequelizeUtils = sequelizeUtils;
 		this.models = {};
 		this.crud = crudFactory(this);
