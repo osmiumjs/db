@@ -11,8 +11,8 @@ function filterName(what) {
 	if (!tools.isString(what)) return what;
 	what = what.trim();
 	return what[0] === '>' || what[0] === '<'
-		   ? what.last(what.length - (what[1] === '<') - 1)
-		   : what;
+		? what.last(what.length - (what[1] === '<') - 1)
+		: what;
 }
 
 function crudFactory(db) {
@@ -29,8 +29,8 @@ function crudFactory(db) {
 		},
 		read     : async (model, where = {}, first, retVal) =>
 			db.getValues(await crud.readRaw(model, where._removed
-												   ? where
-												   : Object.assign(where, {_removed: {[Op.not]: true}}), first), retVal),
+				? where
+				: Object.assign(where, {_removed: {[Op.not]: true}}), first), retVal),
 		updateRaw: async (model, what, where) => await db.models[model].update(what, {
 			where: where ? where : {id: what.id}
 		}),
@@ -97,8 +97,8 @@ class DB extends Sequelize {
 		};
 		if (!belongsToMany) {
 			let options = {};
-			if (mountAs) options = {'foreign-key': `${mountAs.singularize()}Id`, as: mountAs};
-			this.models[to][hasMany ? 'hasMany' : 'hasOne'](this.models[from]);
+			if (mountAs) options = {foreignKey: `${mountAs.singularize()}Id`, as: mountAs};
+			this.models[to][hasMany ? 'hasMany' : 'hasOne'](this.models[from], mountAs ? {foreignKey: `${mountAs.singularize()}Id`} : {});
 			this.models[from].belongsTo(this.models[to], options);
 		} else {
 			let through = {through: `${to}@${from}`};
@@ -166,12 +166,12 @@ class DB extends Sequelize {
 	getValues(what, retVal) {
 		const defValues = (what, def = false) =>
 			what.dataValues
-			? retVal
-			  ? tools.isObject(retVal)
-				? Object.assign(what.get({plain: true}), retVal)
-				: what.get({plain: true})[retVal]
-			  : what.get({plain: true})
-			: def;
+				? retVal
+				? tools.isObject(retVal)
+					? Object.assign(what.get({plain: true}), retVal)
+					: what.get({plain: true})[retVal]
+				: what.get({plain: true})
+				: def;
 
 		if (tools.isObject(what)) return defValues(what);
 		if (tools.isArray(what)) return tools.iterate(what, (row) => defValues(row), []);
