@@ -30,13 +30,13 @@ function crudFactory(db) {
 		read     : async (model, where = {}, first, retVal) =>
 			db.getValues(await crud.readRaw(model, where._removed
 				? where
-				: Object.assign(where, {_removed: {[Op.not]: true}}), first), retVal),
+				: Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
 		updateRaw: async (model, what, where) => await db.models[model].update(what, {
 			where: where ? where : {id: what.id}
 		}),
 		update   : async (model, what, where) =>
 			!!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
-		delete   : async (model, id) => !!(await db.models[model].update({_removed: true}, {where: {id: id}}))[0],
+		delete   : async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
 		destroy  : async (model, id) => (await db.models[model].destroy({where: {id: id}})),
 		count    : async (model, where = {}, options = {}) =>
 			await db.models[model].count(options ? options : where ? {where: where} : {})
@@ -72,6 +72,11 @@ class DB extends Sequelize {
 		this.sequelizeUtils = sequelizeUtils;
 		this.models = {};
 		this.crud = crudFactory(this);
+		this.vRemove = true;
+	}
+
+	disableVirtualRemove() {
+		this.vRemove = false;
 	}
 
 	pluralize(what) {
@@ -140,7 +145,7 @@ class DB extends Sequelize {
 			if (!type) return;
 			strcut[key] = type;
 		});
-		strcut._removed = 'boolean';
+		if (this.vRemove) strcut._removed = 'boolean';
 		this.models[name] = this.define(name, strcut, options);
 		Object.assign(this.models[name].prototype, {
 			mtmGet       : genMtmFn('get'),

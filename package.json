@@ -4,11 +4,11 @@
 	"license"        : "MIT",
 	"author"         : "Vasiliy Isaichkin <vasiliy@isaichkin.ru>",
 	"repository"     : "https://github.com/VasiliyIsaichkin/osmium-db",
-	"version"        : "0.1.3",
+	"version"        : "0.1.4   ",
 	"dependencies"   : {
-		"osmium-tools"     : "^0.1.6",
+		"osmium-tools"     : "^0.1.12",
 		"pg"               : "^7.4.3",
-		"sequelize"        : "^4.38.0",
+		"sequelize"        : "^5.0.0-beta.12",
 		"sugar"            : "^2.0.4",
 		"sugar-inflections": "^2.0.4"
 	},
