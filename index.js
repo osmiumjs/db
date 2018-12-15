@@ -19,52 +19,39 @@ function crudFactory(db) {
 	const crud = {};
 	Object.assign(crud, {
 		createRaw: async (model, what) => await db.models[model].create(db.cleanParams(what, [])),
-		create   : async (model, what) => (await crud.createRaw(model, what)).dataValues,
-		readRaw  : async (model, where, first) => {
+		create:    async (model, what) => (await crud.createRaw(model, what)).dataValues,
+		readRaw:   async (model, where, first) => {
 			where = tools.isObject(where) ? where : {};
 			let options = where['#'] || {};
 			delete where['#'];
 			options.where = options.where || where;
 			return await db.models[model][first ? 'find' : 'findAll'](options);
 		},
-		read     : async (model, where = {}, first, retVal) =>
-			db.getValues(await crud.readRaw(model, where._removed
-				? where
-				: Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
+		read:      async (model, where = {}, first, retVal) =>
+			           db.getValues(await crud.readRaw(model, where._removed
+				           ? where
+				           : Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
 		updateRaw: async (model, what, where) => await db.models[model].update(what, {
 			where: where ? where : {id: what.id}
 		}),
-		update   : async (model, what, where) =>
-			!!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
-		delete   : async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
-		destroy  : async (model, id) => (await db.models[model].destroy({where: {id: id}})),
-		count    : async (model, where = {}, options = {}) =>
-			await db.models[model].count(options ? options : where ? {where: where} : {})
+		update:    async (model, what, where) =>
+			           !!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
+		delete:    async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
+		destroy:   async (model, id) => (await db.models[model].destroy({where: {id: id}})),
+		count:     async (model, where = {}, options = {}) =>
+			           await db.models[model].count(options ? options : where ? {where: where} : {})
 	});
 	return crud;
 }
-
-Sequelize.JSONTEXT = (col_name) => {
-	return {
-		type: Sequelize.TEXT,
-		get : function () {
-			return JSON.parse(this.getDataValue(col_name));
-		},
-		set : function (obj) {
-			return this.setDataValue(col_name, JSON.stringify(obj));
-		}
-	};
-};
 
 class DB extends Sequelize {
 	constructor(dbName, user, password, host, type, log) {
 		super(dbName || 'osmiumapp',
 			user || 'osmiumapp',
 			password || 'masterkey', {
-				dialect         : type || 'postgres',
-				host            : host || 'localhost',
-				logging         : log || false,
-				operatorsAliases: false
+				dialect: type || 'postgres',
+				host:    host || 'localhost',
+				logging: log || false
 			}
 		);
 		this.Sequelize = Sequelize;
@@ -73,6 +60,8 @@ class DB extends Sequelize {
 		this.models = {};
 		this.crud = crudFactory(this);
 		this.vRemove = true;
+		this.DataTypes = Sequelize.DataTypes;
+		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
 	}
 
 	disableVirtualRemove() {
@@ -140,6 +129,7 @@ class DB extends Sequelize {
 		name = filterName(name);
 		tools.iterate(model, (val, key) => {
 			if (key[0] === '#') options = val;
+			if (tools.isObject(val) && val.key) val = val.key;
 			if (!tools.isString(val)) return;
 			let type = this.Sequelize[val.toUpperCase()];
 			if (!type) return;
@@ -148,15 +138,15 @@ class DB extends Sequelize {
 		if (this.vRemove) strcut._removed = 'boolean';
 		this.models[name] = this.define(name, strcut, options);
 		Object.assign(this.models[name].prototype, {
-			mtmGet       : genMtmFn('get'),
-			mtmSet       : genMtmFn('set'),
-			mtmAdd       : genMtmFn('add', true),
-			mtmAddMany   : genMtmFn('add'),
-			mtmRemove    : genMtmFn('remove', true),
+			mtmGet:        genMtmFn('get'),
+			mtmSet:        genMtmFn('set'),
+			mtmAdd:        genMtmFn('add', true),
+			mtmAddMany:    genMtmFn('add'),
+			mtmRemove:     genMtmFn('remove', true),
 			mtmRemoveMany: genMtmFn('remove'),
-			mtmHas       : genMtmFn('has', true),
-			mtmHasMany   : genMtmFn('has'),
-			mtmCount     : genMtmFn('count')
+			mtmHas:        genMtmFn('has', true),
+			mtmHasMany:    genMtmFn('has'),
+			mtmCount:      genMtmFn('count')
 		});
 	};
 
