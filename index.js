@@ -130,6 +130,14 @@ class DB extends Sequelize {
 			if (!tools.isString(val)) return;
 			let type = this.Sequelize[val.toUpperCase()];
 			if (!type) return;
+			if (key[0] === '*') {
+				key.remove('*');
+				type = {
+					type,
+					primaryKey:    true,
+					autoIncrement: type === this.Sequelize.DataTypes.INTEGER
+				};
+			}
 			strcut[key] = type;
 		});
 		if (this.vRemove) strcut._removed = 'boolean';
