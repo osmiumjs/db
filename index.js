@@ -132,7 +132,7 @@ class DB extends Sequelize {
 			let type = this.Sequelize[val.toUpperCase()];
 			if (!type) return;
 			if (key[0] === '*') {
-				key.remove('*');
+				key = key.substring(1);
 				type = {
 					type,
 					primaryKey:    true,
