@@ -46,7 +46,8 @@ function crudFactory(db) {
 
 class DB extends Sequelize {
 	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
-		super(dbName, user, password, tools.isObject(host) ? host : {dialect, host, logging, port});
+		options = Object.assign({dialect, host, logging, port}, tools.isObject(host) ? host : options, options);
+		super(dbName, user, password, options);
 		this.Sequelize = Sequelize;
 		this.Op = Op;
 		this.sequelizeUtils = sequelizeUtils;
