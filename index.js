@@ -45,23 +45,20 @@ function crudFactory(db) {
 }
 
 class DB extends Sequelize {
-	constructor(dbName, user, password, host, type, log) {
-		super(dbName || 'osmiumapp',
-			user || 'osmiumapp',
-			password || 'masterkey', {
-				dialect: type || 'postgres',
-				host:    host || 'localhost',
-				logging: log || false
-			}
-		);
+	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
+		super(dbName, user, password, tools.isObject(host) ? host : {dialect, host, logging, port});
 		this.Sequelize = Sequelize;
 		this.Op = Op;
 		this.sequelizeUtils = sequelizeUtils;
 		this.models = {};
 		this.crud = crudFactory(this);
-		this.vRemove = true;
+		this.vRemove = false;
 		this.DataTypes = Sequelize.DataTypes;
 		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
+	}
+
+	enableVirtualRemove() {
+		this.vRemove = false;
 	}
 
 	disableVirtualRemove() {

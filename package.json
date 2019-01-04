@@ -1,15 +1,15 @@
 {
-	"name": "osmium-db",
-	"description": "Osmium DB",
-	"license": "MIT",
-	"author": "Vasiliy Isaichkin <vasiliy@isaichkin.ru>",
-	"repository": "https://github.com/VasiliyIsaichkin/osmium-db",
-	"version": "0.1.6",
-	"dependencies": {
-		"osmium-tools": "^0.1.12",
-		"pg": "^7.7.1",
-		"sequelize": "^5.0.0-beta.15",
-		"sugar": "^2.0.6",
+	"name"           : "osmium-db",
+	"description"    : "Osmium DB",
+	"license"        : "MIT",
+	"author"         : "Vasiliy Isaichkin <vasiliy@isaichkin.ru>",
+	"repository"     : "https://github.com/VasiliyIsaichkin/osmium-db",
+	"version"        : "0.2.0",
+	"dependencies"   : {
+		"osmium-tools"     : "^0.1.12",
+		"pg"               : "^7.7.1",
+		"sequelize"        : "^5.0.0-beta.15",
+		"sugar"            : "^2.0.6",
 		"sugar-inflections": "^2.0.6"
 	},
 	"devDependencies": {
