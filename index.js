@@ -9,7 +9,7 @@ Sugar.extend();
 
 function filterName(what) {
 	if (!tools.isString(what)) return what;
-	what = what.trim();
+	what = what.trim().split('@')[0].remove('*');
 	return what[0] === '>' || what[0] === '<'
 		? what.last(what.length - (what[1] === '<') - 1)
 		: what;
@@ -81,15 +81,26 @@ class DB extends Sequelize {
 	 * @param hasMany
 	 * @param belongsToMany
 	 * @param mountAs
+	 * @param mountAsPk
 	 */
-	link(from, to, hasMany, belongsToMany, mountAs) {
+	link(from, to, hasMany, belongsToMany, mountAs, mountAsPk = false) {
 		let addMtM = (a, b, through) => {
 			this.models[a].belongsToMany(this.models[b], through);
 			(this.models[a].mtmThrough = this.models[a].mtmThrough || {})[b] = through;
 		};
 		if (!belongsToMany) {
 			let options = {};
-			if (mountAs) options = {foreignKey: `${mountAs.singularize()}Id`, as: mountAs};
+			if (mountAs) {
+				let allowNull = mountAs.indexOf('!') === -1;
+				mountAs = mountAs.remove('!').trim();
+				options = {
+					foreignKey: {
+						name:       `${mountAs.singularize()}Id`,
+						primaryKey: mountAsPk,
+						allowNull
+					}, as:      mountAs
+				};
+			}
 			this.models[to][hasMany ? 'hasMany' : 'hasOne'](this.models[from], mountAs ? {foreignKey: `${mountAs.singularize()}Id`} : {});
 			this.models[from].belongsTo(this.models[to], options);
 		} else {
@@ -107,11 +118,12 @@ class DB extends Sequelize {
 				name = name.split('@');
 				let mountTo = (name.length > 1) ? name[1] : false;
 				name = name[0];
+				let asPk = name[1] === '*';
 				if (name[0] === '>') {
-					this.link(filterName(name), filterName(parent), true, name[1] === '<', mountTo);
+					this.link(filterName(name), filterName(parent), true, name[1] === '<', mountTo, asPk);
 				}
 				if (name[0] === '<') {
-					this.link(filterName(parent), filterName(name), true, name[1] === '>', mountTo);
+					this.link(filterName(parent), filterName(name), true, name[1] === '>', mountTo, asPk);
 				}
 			}
 			this.processRelations(out, name);
@@ -129,15 +141,19 @@ class DB extends Sequelize {
 			if (key[0] === '#') options = val;
 			if (tools.isObject(val) && val.key) val = val.key;
 			if (!tools.isString(val)) return;
-			let type = this.Sequelize[val.toUpperCase()];
+			let notNull = val.indexOf('!') !== -1;
+			val = val.remove('!').split('^');
+			let type = this.Sequelize[val[0].toUpperCase()];
 			if (!type) return;
+			if (val.length > 1) type = type(...val[1].split(','));
+			type = {type};
+			if (notNull) type.allowNull = false;
 			if (key[0] === '*') {
 				key = key.substring(1);
-				type = {
-					type,
+				Object.assign(type, {
 					primaryKey:    true,
 					autoIncrement: type === this.Sequelize.DataTypes.INTEGER
-				};
+				});
 			}
 			strcut[key] = type;
 		});
