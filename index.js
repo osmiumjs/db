@@ -48,6 +48,7 @@ class DB extends Sequelize {
 	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
 		options = Object.assign({dialect, host, logging, port}, tools.isObject(host) ? host : options, options);
 		super(dbName, user, password, options);
+		this._options = options;
 		this.Sequelize = Sequelize;
 		this.Op = Op;
 		this.sequelizeUtils = sequelizeUtils;
@@ -135,7 +136,9 @@ class DB extends Sequelize {
 			return this[`${cmd}${this[singularize ? 'singularize' : 'pluralize'](target)}`](p1);
 		};
 		let strcut = {};
-		let options = {};
+		let options = {
+			freezeTableName: !!this._options.freezeTableName
+		};
 		name = filterName(name);
 		tools.iterate(model, (val, key) => {
 			if (key[0] === '#') options = val;
