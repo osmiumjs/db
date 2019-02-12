@@ -4,14 +4,15 @@
 	"license"        : "MIT",
 	"author"         : "Vasiliy Isaichkin <vasiliy@isaichkin.ru>",
 	"repository"     : "https://github.com/VasiliyIsaichkin/osmium-db",
-	"version"        : "0.2.18",
+	"version"        : "0.2.20",
 	"dependencies"   : {
 		"osmium-tools"     : "^0.1.12",
-		"pg"               : "^7.7.1",
+		"pg"               : "^7.8.0",
 		"pg-hstore"        : "^2.3.2",
-		"sequelize"        : "^5.0.0-beta.15",
+		"sequelize"        : "^5.0.0-beta.16",
 		"sugar"            : "^2.0.6",
-		"sugar-inflections": "^2.0.6"
+		"sugar-inflections": "^2.0.6",
+		"lodash"           : "^4.17.11"
 	},
 	"devDependencies": {
 		"mocha": "^5.2.0"

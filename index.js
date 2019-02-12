@@ -2,6 +2,7 @@ const tools = require('osmium-tools');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sequelizeUtils = require('sequelize/lib/utils');
+const DataTypeTIMESTAMP = require('./dataTypes/timestamp');
 
 const Sugar = require('sugar');
 require('sugar-inflections');
@@ -11,35 +12,35 @@ function filterName(what) {
 	if (!tools.isString(what)) return what;
 	what = what.trim().split('@')[0].remove('*');
 	return what[0] === '>' || what[0] === '<'
-		? what.last(what.length - (what[1] === '<') - 1)
-		: what;
+	       ? what.last(what.length - (what[1] === '<') - 1)
+	       : what;
 }
 
 function crudFactory(db) {
 	const crud = {};
 	Object.assign(crud, {
 		createRaw: async (model, what) => await db.models[model].create(db.cleanParams(what, [])),
-		create:    async (model, what) => (await crud.createRaw(model, what)).dataValues,
-		readRaw:   async (model, where, first) => {
+		create   : async (model, what) => (await crud.createRaw(model, what)).dataValues,
+		readRaw  : async (model, where, first) => {
 			where = tools.isObject(where) ? where : {};
 			let options = where['#'] || {};
 			delete where['#'];
 			options.where = options.where || where;
 			return await db.models[model][first ? 'find' : 'findAll'](options);
 		},
-		read:      async (model, where = {}, first, retVal) =>
-			           db.getValues(await crud.readRaw(model, where._removed
-				           ? where
-				           : Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
+		read     : async (model, where = {}, first, retVal) =>
+			db.getValues(await crud.readRaw(model, where._removed
+			                                       ? where
+			                                       : Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
 		updateRaw: async (model, what, where) => await db.models[model].update(what, {
 			where: where ? where : {id: what.id}
 		}),
-		update:    async (model, what, where) =>
-			           !!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
-		delete:    async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
-		destroy:   async (model, id) => (await db.models[model].destroy({where: {id: id}})),
-		count:     async (model, where = {}, options = {}) =>
-			           await db.models[model].count(options ? options : where ? {where: where} : {})
+		update   : async (model, what, where) =>
+			!!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
+		delete   : async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
+		destroy  : async (model, id) => (await db.models[model].destroy({where: {id: id}})),
+		count    : async (model, where = {}, options = {}) =>
+			await db.models[model].count(options ? options : where ? {where: where} : {})
 	});
 	return crud;
 }
@@ -51,12 +52,24 @@ class DB extends Sequelize {
 		this._options = options;
 		this.Sequelize = Sequelize;
 		this.Op = Op;
+
 		this.sequelizeUtils = sequelizeUtils;
 		this.models = {};
 		this.crud = crudFactory(this);
 		this.vRemove = false;
+
+		if (options.dialect.toLowerCase() === 'postgres') {
+			this.PG = require('pg');
+			this.PG.types.setTypeParser(1114, str => str);
+
+			DataTypeTIMESTAMP(Sequelize);
+		}
+
 		this.DataTypes = Sequelize.DataTypes;
-		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
+		tools.iterateKeys(Sequelize.DataTypes, (name) => {
+			this[name] = name.toLowerCase();
+			console.log(name);
+		});
 	}
 
 	enableVirtualRemove() {
@@ -96,10 +109,10 @@ class DB extends Sequelize {
 				mountAs = mountAs.remove('!').trim();
 				options = {
 					foreignKey: {
-						name:       `${mountAs.singularize()}Id`,
+						name      : `${mountAs.singularize()}Id`,
 						primaryKey: mountAsPk,
 						allowNull
-					}, as:      mountAs
+					}, as     : mountAs
 				};
 			}
 			this.models[to][hasMany ? 'hasMany' : 'hasOne'](this.models[from], mountAs ? {foreignKey: `${mountAs.singularize()}Id`} : {});
@@ -136,8 +149,10 @@ class DB extends Sequelize {
 			return this[`${cmd}${this[singularize ? 'singularize' : 'pluralize'](target)}`](p1);
 		};
 		let strcut = {};
+		//disableTimestamps
 		let options = {
-			freezeTableName: !!this._options.freezeTableName
+			freezeTableName: !!this._options.freezeTableName,
+			timestamps     : !this._options.disableTimestamps
 		};
 		name = filterName(name);
 		tools.iterate(model, (val, key) => {
@@ -154,7 +169,7 @@ class DB extends Sequelize {
 			if (key[0] === '*') {
 				key = key.substring(1);
 				Object.assign(type, {
-					primaryKey:    true,
+					primaryKey   : true,
 					autoIncrement: type === this.Sequelize.DataTypes.INTEGER
 				});
 			}
@@ -163,15 +178,15 @@ class DB extends Sequelize {
 		if (this.vRemove) strcut._removed = 'boolean';
 		this.models[name] = this.define(name, strcut, options);
 		Object.assign(this.models[name].prototype, {
-			mtmGet:        genMtmFn('get'),
-			mtmSet:        genMtmFn('set'),
-			mtmAdd:        genMtmFn('add', true),
-			mtmAddMany:    genMtmFn('add'),
-			mtmRemove:     genMtmFn('remove', true),
+			mtmGet       : genMtmFn('get'),
+			mtmSet       : genMtmFn('set'),
+			mtmAdd       : genMtmFn('add', true),
+			mtmAddMany   : genMtmFn('add'),
+			mtmRemove    : genMtmFn('remove', true),
 			mtmRemoveMany: genMtmFn('remove'),
-			mtmHas:        genMtmFn('has', true),
-			mtmHasMany:    genMtmFn('has'),
-			mtmCount:      genMtmFn('count')
+			mtmHas       : genMtmFn('has', true),
+			mtmHasMany   : genMtmFn('has'),
+			mtmCount     : genMtmFn('count')
 		});
 	};
 
@@ -186,12 +201,12 @@ class DB extends Sequelize {
 	getValues(what, retVal) {
 		const defValues = (what, def = false) =>
 			what.dataValues
-				? retVal
-				? tools.isObject(retVal)
-					? Object.assign(what.get({plain: true}), retVal)
-					: what.get({plain: true})[retVal]
-				: what.get({plain: true})
-				: def;
+			? retVal
+			  ? tools.isObject(retVal)
+			    ? Object.assign(what.get({plain: true}), retVal)
+			    : what.get({plain: true})[retVal]
+			  : what.get({plain: true})
+			: def;
 
 		if (tools.isObject(what)) return defValues(what);
 		if (tools.isArray(what)) return tools.iterate(what, (row) => defValues(row), []);
