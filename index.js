@@ -66,10 +66,7 @@ class DB extends Sequelize {
 		}
 
 		this.DataTypes = Sequelize.DataTypes;
-		tools.iterateKeys(Sequelize.DataTypes, (name) => {
-			this[name] = name.toLowerCase();
-			console.log(name);
-		});
+		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
 	}
 
 	enableVirtualRemove() {
