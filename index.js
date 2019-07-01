@@ -3,6 +3,7 @@ const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sequelizeUtils = require('sequelize/lib/utils');
 const DataTypeTIMESTAMP = require('./dataTypes/timestamp');
+const BigNumber = require('bignumber.js');
 
 const Sugar = require('sugar');
 require('sugar-inflections');
@@ -16,35 +17,6 @@ function filterName(what) {
 	       : what;
 }
 
-function crudFactory(db) {
-	const crud = {};
-	Object.assign(crud, {
-		createRaw: async (model, what) => await db.models[model].create(db.cleanParams(what, [])),
-		create   : async (model, what) => (await crud.createRaw(model, what)).dataValues,
-		readRaw  : async (model, where, first) => {
-			where = tools.isObject(where) ? where : {};
-			let options = where['#'] || {};
-			delete where['#'];
-			options.where = options.where || where;
-			return await db.models[model][first ? 'find' : 'findAll'](options);
-		},
-		read     : async (model, where = {}, first, retVal) =>
-			db.getValues(await crud.readRaw(model, where._removed
-			                                       ? where
-			                                       : Object.assign(where, this.vRemove ? {_removed: {[this.Op.not]: true}} : {}), first), retVal),
-		updateRaw: async (model, what, where) => await db.models[model].update(what, {
-			where: where ? where : {id: what.id}
-		}),
-		update   : async (model, what, where) =>
-			!!(await crud.updateRaw(model, db.cleanParams(what), where))[0],
-		delete   : async (model, id) => !!(await db.models[model].update(this.vRemove ? {_removed: true} : {}, {where: {id: id}}))[0],
-		destroy  : async (model, id) => (await db.models[model].destroy({where: {id: id}})),
-		count    : async (model, where = {}, options = {}) =>
-			await db.models[model].count(options ? options : where ? {where: where} : {})
-	});
-	return crud;
-}
-
 class DB extends Sequelize {
 	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
 		options = Object.assign({dialect, host, logging, port}, tools.isObject(host) ? host : options, options);
@@ -55,8 +27,6 @@ class DB extends Sequelize {
 
 		this.sequelizeUtils = sequelizeUtils;
 		this.models = {};
-		this.crud = crudFactory(this);
-		this.vRemove = false;
 
 		if (options.dialect.toLowerCase() === 'postgres') {
 			this.PG = require('pg');
@@ -67,14 +37,6 @@ class DB extends Sequelize {
 
 		this.DataTypes = Sequelize.DataTypes;
 		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
-	}
-
-	enableVirtualRemove() {
-		this.vRemove = false;
-	}
-
-	disableVirtualRemove() {
-		this.vRemove = false;
 	}
 
 	pluralize(what) {
@@ -146,12 +108,14 @@ class DB extends Sequelize {
 			return this[`${cmd}${this[singularize ? 'singularize' : 'pluralize'](target)}`](p1);
 		};
 		let strcut = {};
-		//disableTimestamps
 		let options = {
 			freezeTableName: !!this._options.freezeTableName,
 			timestamps     : !this._options.disableTimestamps
 		};
 		name = filterName(name);
+
+		let useBignum = [];
+
 		tools.iterate(model, (val, key) => {
 			if (key[0] === '#') options = val;
 			if (tools.isObject(val) && val.key) val = val.key;
@@ -170,9 +134,22 @@ class DB extends Sequelize {
 					autoIncrement: type === this.Sequelize.DataTypes.INTEGER
 				});
 			}
+
+			if (type.type.key === 'BIGINT') useBignum.push(key);
+
 			strcut[key] = type;
 		});
-		if (this.vRemove) strcut._removed = 'boolean';
+
+		if (useBignum) {
+			options.hooks = {
+				afterFind(mdl) {
+					tools.iterate(useBignum, (val) => {
+						mdl.dataValues[val] = new BigNumber(mdl.dataValues[val]);
+					});
+				}
+			};
+		}
+
 		this.models[name] = this.define(name, strcut, options);
 		Object.assign(this.models[name].prototype, {
 			mtmGet       : genMtmFn('get'),
