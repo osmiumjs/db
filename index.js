@@ -135,12 +135,12 @@ class DB extends Sequelize {
 				});
 			}
 
-			if (type.type.key === 'BIGINT') useBignum.push(key);
+			//if (type.type.key === 'BIGINT') useBignum.push(key);
 
 			strcut[key] = type;
 		});
 
-		if (useBignum) {
+		/*if (useBignum) {
 			options.hooks = {
 				afterFind(mdl) {
 					tools.iterate(useBignum, (val) => {
@@ -148,7 +148,7 @@ class DB extends Sequelize {
 					});
 				}
 			};
-		}
+		}*/
 
 		this.models[name] = this.define(name, strcut, options);
 		Object.assign(this.models[name].prototype, {
