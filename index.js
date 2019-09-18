@@ -22,6 +22,12 @@ function OsmiumDBError(message, data) {
 	this.data = data;
 }
 
+class SQLITE extends DB {
+	constructor(fName = 'main.db', dbName = 'db', logger = false, options) {
+		super(dbName, '', '', '', '', 'sqlite', logger, Object.assign({storage: fName}, options));
+	}
+}
+
 class DB extends Sequelize {
 	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
 		options = Object.assign({dialect, host, logging, port}, tools.isObject(host) ? host : options, options);
@@ -43,6 +49,10 @@ class DB extends Sequelize {
 
 		this.DataTypes = Sequelize.DataTypes;
 		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
+	}
+
+	static SQLITE() {
+		return SQLITE;
 	}
 
 	pluralize(what) {
