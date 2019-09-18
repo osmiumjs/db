@@ -1,4 +1,4 @@
-const tools = require('osmium-tools');
+const oTools = require('osmium-tools');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 const sequelizeUtils = require('sequelize/lib/utils');
@@ -10,7 +10,7 @@ require('sugar-inflections');
 Sugar.extend();
 
 function filterName(what) {
-	if (!tools.isString(what)) return what;
+	if (!oTools.isString(what)) return what;
 	what = what.trim().split('=')[0].split('@')[0].remove('*');
 	return what[0] === '>' || what[0] === '<'
 	       ? what.last(what.length - (what[1] === '<') - 1)
@@ -22,7 +22,7 @@ function OsmiumDBError(message, data) {
 	this.data = data;
 }
 
-class SQLITE extends DB {
+class DBSQLITE extends DB {
 	constructor(fName = 'main.db', dbName = 'db', logger = false, options) {
 		super(dbName, '', '', '', '', 'sqlite', logger, Object.assign({storage: fName}, options));
 	}
@@ -30,7 +30,7 @@ class SQLITE extends DB {
 
 class DB extends Sequelize {
 	constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {}) {
-		options = Object.assign({dialect, host, logging, port}, tools.isObject(host) ? host : options, options);
+		options = Object.assign({dialect, host, logging, port}, oTools.isObject(host) ? host : options, options);
 		super(dbName, user, password, options);
 
 		this._options = options;
@@ -48,11 +48,11 @@ class DB extends Sequelize {
 		}
 
 		this.DataTypes = Sequelize.DataTypes;
-		tools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
+		oTools.iterateKeys(Sequelize.DataTypes, (name) => this[name] = name.toLowerCase());
 	}
 
 	static SQLITE() {
-		return SQLITE;
+		return DBSQLITE;
 	}
 
 	pluralize(what) {
@@ -112,9 +112,9 @@ class DB extends Sequelize {
 	};
 
 	processRelations(schema, parent = false) {
-		if (!tools.isObject(schema) || parent === '#') return;
+		if (!oTools.isObject(schema) || parent === '#') return;
 
-		tools.iterateKeys(schema, (name, out) => {
+		oTools.iterateKeys(schema, (name, out) => {
 			if (parent) {
 				name = name.split('=');
 				const fkName = name[1] ? name[1] : false;
@@ -145,10 +145,10 @@ class DB extends Sequelize {
 		name = filterName(name);
 		//let useBignum = [];
 
-		tools.iterate(model, (val, key) => {
+		oTools.iterate(model, (val, key) => {
 			if (key[0] === '#') options = val;
-			if (tools.isObject(val) && val.key) val = val.key;
-			if (!tools.isString(val)) return;
+			if (oTools.isObject(val) && val.key) val = val.key;
+			if (!oTools.isString(val)) return;
 
 			let notNull = val.indexOf('!') !== -1;
 			val = val.remove('!').split('^');
@@ -199,8 +199,8 @@ class DB extends Sequelize {
 
 	defineSchema(schema, parent = false) {
 		if (parent) this.registerModel(parent, Object.clone(schema, {deep: true}));
-		tools.iterateKeys(schema, (name, subSchema) => {
-			if (name[0] !== '#' && tools.isObject(subSchema)) this.defineSchema(Object.clone(subSchema), name);
+		oTools.iterateKeys(schema, (name, subSchema) => {
+			if (name[0] !== '#' && oTools.isObject(subSchema)) this.defineSchema(Object.clone(subSchema), name);
 		});
 		if (!parent) this.processRelations(schema);
 	};
@@ -209,24 +209,24 @@ class DB extends Sequelize {
 		const defValues = (what, def = false) =>
 			what.dataValues
 			? retVal
-			  ? tools.isObject(retVal)
+			  ? oTools.isObject(retVal)
 			    ? Object.assign(what.get({plain: true}), retVal)
 			    : what.get({plain: true})[retVal]
 			  : what.get({plain: true})
 			: def;
 
-		if (tools.isObject(what)) return defValues(what);
-		if (tools.isArray(what)) return tools.iterate(what, (row) => defValues(row), []);
+		if (oTools.isObject(what)) return defValues(what);
+		if (oTools.isArray(what)) return oTools.iterate(what, (row) => defValues(row), []);
 	};
 
 	cleanParams(what, list) {
-		if (!tools.isObject(what)) return what;
+		if (!oTools.isObject(what)) return what;
 
 		const defList = ['id'];
-		tools.iterateKeys(list || defList, (name) => { delete what[name]; });
+		oTools.iterateKeys(list || defList, (name) => { delete what[name]; });
 
 		return what;
 	};
 }
 
-module.exports = DB;
+module.exports = {DB, DBSQLITE, Sequelize, BigNumber, Op, Sugar, oTools, sequelizeUtils};
