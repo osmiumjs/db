@@ -128,6 +128,13 @@ Sequelize в таблицу автоматически добавляет пол
 `=`_pkName_ | Справа, самый последний | Задает имя внешнего ключа (foreign key)<br>По-умолчаню - внешний ключ (foreign key) имеет имя в виде сингуляризированное имя таблицы или имя связи (при использовании `@`) + Id (userId для таблицы users)<br>Кроме MtM
 `*` | Слева, после указателя связанности (если есть) | Задает primary key, отключает реализацию по-умолчанию<br>Кроме MtM
 
+### Модификаторы типа
+Модификатор | Позиция | Значение
+--- | --- | ---
+`!` | Справа, перед `^` | NOT NULL 
+`~` | Справа, перед `^` | Уникальный
+`^`_arg1,arg2,...argN_ | Справа, самый последний | Параметры типа Sequelize, например для STRING(arg1)
+
 Примеры использования:
 ```javascript
 {
@@ -145,13 +152,6 @@ Sequelize в таблицу автоматически добавляет пол
 }
 ```
 
-### Модификаторы типа
-Модификатор | Позиция | Значение
---- | --- | ---
-`!` | Справа, перед `^` | NOT NULL 
-`~` | Справа, перед `^` | Уникальный
-`^`_arg1,arg2,...argN_ | Справа, самый последний | Параметры типа Sequelize, например для STRING(arg1)
-
 ## Работа с Many to Many
 Таблица связи создается автоматичски с именем `rightTable@leftTable` или если задан `AS` через `@` то `rightTable@leftTable#asName`
 
@@ -163,12 +163,23 @@ Sequelize в таблицу автоматически добавляет пол
 Пример использования:
 ```javascript
 {
-    goods: {
-        name     : 'string',
-        '><users': true
-    },
     users: {
+        name         : 'string',
+        '><userItems': true
+    },
+    items: {
         name: 'string'
-    }
+    }    
+}
+```
+```javascript
+const user = await db.models.users.create({name: 'Petya'});
+const item1 = await db.models.items.create({name: 'Printer'});
+const item2 = await db.models.items.create({name: 'Computer'});
+
+await user.mtmAdd('userItems', [item1, item2]);
+await db.models.goods.findOne({
+    where  : {id: 1},
+    include: ['userItems']
 }
 ```
