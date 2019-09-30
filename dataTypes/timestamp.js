@@ -40,7 +40,7 @@ function timestampPostgres(Sequelize) {
 	inherits(TIMESTAMP, DataTypes.TIMESTAMP);
 
 	TIMESTAMP.prototype.parse = function (value) {
-		return typeof value === 'string' ? new Date(value) : value;
+		return (typeof value === 'string' || typeof value === 'number') ? new Date(value) : value;
 	};
 
 	DataTypes.postgres.TIMESTAMP = TIMESTAMP;
