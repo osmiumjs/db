@@ -1,9 +1,9 @@
-# osmium-db
+# @osmium/db
 ## API
 ### Экспорт модуля и инициализация
-Модуль `osmium-db` экспортирует:
-* DB - Базовый класс OsmiumDB, расширяет собой класс [ORM Sequelize](https://sequelize.org/master/class/lib/sequelize.js~Sequelize.html#instance-constructor-constructor)
-    * `constructor(dbName = 'osmiumapp', user = 'osmiumapp', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {})`
+Модуль `@osmium/db` экспортирует:
+* DB - Базовый класс DB, расширяет собой класс [ORM Sequelize](https://sequelize.org/master/class/lib/sequelize.js~Sequelize.html#instance-constructor-constructor)
+    * `constructor(dbName = 'app', user = 'user', password = 'masterkey', host = 'localhost', port = 5432, dialect = 'postgres', logging = false, options = {})`
     <br>host - адрес хоста либо объект options (см. ниже)
     <br>dialect - один из [dialects](https://sequelize.org/master/manual/dialects.html)
     <br>logging - функция-логгер или false для отключения
@@ -14,28 +14,28 @@
 * BigNumber - класс [BigNumber.js](https://mikemcl.github.io/bignumber.js/)
 * Op - Sequelize.Op
 * Sugar - [SugarJS](https://sugarjs.com/)
-* oTools - [osmium-tools](https://github.com/VasiliyIsaichkin/osmium-tools)
+* oTools - [@osmium/tools](https://github.com/osmiumjs/tools)
 * sequelizeUtils - [sequelize/lib/utils](https://github.com/sequelize/sequelize/blob/master/lib/utils.js)
 
 Примеры инициализации:
 ```
-const {DB} = require('osmium-db');
+const {DB} = require('@osmium/db');
 const db = new DB('dbName', 'userName', 'userPassword', 'host', 5432);
 ```
 ```
-const {DB} = require('osmium-db');
-const db = new DB('dbName', 'userName', 'userPassword', {  
+const {DB} = require('@osmium/db');
+const db = new DB('dbName', 'userName', 'userPassword', {
     define: { timestamps: false }
 });
 ```
 ```
-const {DBSQLITE} = require('osmium-db');
+const {DBSQLITE} = require('@osmium/db');
 const db = new DBSQLITE('file.sqlite3');
 ```
 
 ### Методы класса DB (кроме наследуюмых из Sequelize)
 * `defineSchema(modelDefinition)` - Задает модель базы данных, первым аргументом принимает структуру модели БД (см. раздел 'Модели')
-    > Замечание: второй аргумент функции является служебным и не предназначен для использования вне osmium-db
+    > Замечание: второй аргумент функции является служебным и не предназначен для использования вне @osmium/db
 
 ### Свойства класса DB
 * `models` - Объект, где ключ - имя таблицы, значение - инстанс модели объявленный через [Sequelize.define](https://sequelize.org/master/class/lib/sequelize.js~Sequelize.html#instance-method-define)
@@ -80,39 +80,38 @@ Sequelize в таблицу автоматически добавляет пол
         "<table_c": true
     }
 }
-``` 
+```
 
 ### Типы данных
-Тип данных | Тип в JS | Тип в SQL | Поддерживается | Примечание  
+Тип данных | Тип в JS | Тип в SQL | Поддерживается | Примечание
 --- | --- |  --- |  :---: | ---
 `string` | string, длина <= 255 |  VARCHAR(255) | * |
 `string^n` | string, длина <= n |  VARCHAR(n) | * |
 `text` | string, любая длина | TEXT |  * | Медленнее чем string
-`citext` | string, любая длина<br>регистронезависимый | CITEXT | PostgreSQL, SQLite | 
+`citext` | string, любая длина<br>регистронезависимый | CITEXT | PostgreSQL, SQLite |
 `integer` | integer (32bit) | INTEGER | * | Диапазон -2147483648 / +2147483647
 `number` | integer (53bit) | BIGINT<br>PgSQL - INT8 | * | Диапазон -9007199254740991 / +9007199254740991
 `bigint` | Вх - integer, string<br>Вых - string | BIGINT<br>PgSQL - INT8 | * | Диапазон -9223372036854775808 / 9223372036854775807
-`bignumber` | Вх - integer, string, bignumber.js<br>Вых - bignumber.js | BIGINT<br>PgSQL - INT8 | * | Диапазон -9223372036854775808 / 9223372036854775807<br>Возвращает экземпляр bignimber.js         
-`float` |  | FLOAT | * | 
-`float^n` |  | FLOAT(n) | * | 
-`float^n,t` |  | FLOAT(n,t) | * | 
-`real` |  | REAL | * | 
-`real^n` |  | REAL(n) | * | 
-`real^n,t` |  | REAL(n,t) | * | 
-`double` |  | DOUBLE | * | 
-`double^n` |  | DOUBLE(n) | * | 
-`double^n,t` |  | DOUBLE(n,t) | * | 
-`decimal` |  | DECIMAL | * | 
+`bignumber` | Вх - integer, string, bignumber.js<br>Вых - bignumber.js | BIGINT<br>PgSQL - INT8 | * | Диапазон -9223372036854775808 / 9223372036854775807<br>Возвращает экземпляр bignimber.js
+`float` |  | FLOAT | * |
+`float^n` |  | FLOAT(n) | * |
+`float^n,t` |  | FLOAT(n,t) | * |
+`real` |  | REAL | * |
+`real^n` |  | REAL(n) | * |
+`real^n,t` |  | REAL(n,t) | * |
+`double` |  | DOUBLE | * |
+`double^n` |  | DOUBLE(n) | * |
+`double^n,t` |  | DOUBLE(n,t) | * |
+`decimal` |  | DECIMAL | * |
 `decimal^n,t` |  | DECIMAL(n,t) | * |
-`timestamp` | Вх - Date<br>Вых - Date | TIMESTAMP WITHOUT TIME ZONE | * | Пока не поддерживает макросы поиска 
-`date` |  | DATE | * | 
-`date^n` |  | DATE(n) | MySQL >= 5.6.4 | 
-`dateonly` |  | DATEONLY | * | 
-`boolean` |  | BOOLEAN | * | 
-`json` | Все что сериализуется JSON | JSON | PostgreSQL, SQLite, MySQL |  
-`jsonb`| Все что сериализуется JSON | JSONB | PostgreSQL | JSON с поддержкой поиска по нему  
-`blob` | Вх - Buffer, any->string<br>Вых - Buffer | BLOB,<br>PgSQL - BYTEA | PostgreSQL | 
-`uuid` | | PgSQL/SQLite - UUID,<br> MySQL - CHAR(36) BINARY | PostgreSQL, SQLite, MySQL | 
+`date` |  | DATE | * |
+`date^n` |  | DATE(n) | MySQL >= 5.6.4 |
+`dateonly` |  | DATEONLY | * |
+`boolean` |  | BOOLEAN | * |
+`json` | Все что сериализуется JSON | JSON | PostgreSQL, SQLite, MySQL |
+`jsonb`| Все что сериализуется JSON | JSONB | PostgreSQL | JSON с поддержкой поиска по нему
+`blob` | Вх - Buffer, any->string<br>Вых - Buffer | BLOB,<br>PgSQL - BYTEA | PostgreSQL |
+`uuid` | | PgSQL/SQLite - UUID,<br> MySQL - CHAR(36) BINARY | PostgreSQL, SQLite, MySQL |
 `cidr` | | CIDR | PostgreSQL |
 `inet` | | INET | PostgreSQL |
 `macaddr` | | MACADDR | PostgreSQL |
@@ -120,7 +119,7 @@ Sequelize в таблицу автоматически добавляет пол
 ### Модификаторы имени поля
 Модификатор | Позиция | Значение
 --- | --- | ---
-`#` | Единственное значение | Задает опции модели таблицы, значение задается вместо типа поля и передается третьим аргументом в функцию [Sequelize.define](https://sequelize.org/master/class/lib/sequelize.js~Sequelize.html#instance-method-define) 
+`#` | Единственное значение | Задает опции модели таблицы, значение задается вместо типа поля и передается третьим аргументом в функцию [Sequelize.define](https://sequelize.org/master/class/lib/sequelize.js~Sequelize.html#instance-method-define)
 `<`_table_ | Слева, самый первый | Создает связь One(таблица _table_) to Many(эта таблица)<br>Внешний ключ (foreign key) имеет имя в виде сингуляризированное имя таблицы или имя связи (при использовании `@`) + Id (userId для таблицы users)
 `>`_table_ | Слева, самый первый | Создает связь One(эта таблица) to Many(таблица _table_)<br>Внешний ключ (foreign key) имеет имя в виде сингуляризированное имя таблицы или имя связи (при использовании `@`) + Id (userId для таблицы users)
 `><`_table_<br>`<>`_table_ | Слева, самый первый | Создает связь Many to Many через промежуточную таблицу _thisTable_@_otherTable_<br>Поддерживает только модификатор `@`
@@ -131,7 +130,7 @@ Sequelize в таблицу автоматически добавляет пол
 ### Модификаторы типа
 Модификатор | Позиция | Значение
 --- | --- | ---
-`!` | Справа, перед `^` | NOT NULL 
+`!` | Справа, перед `^` | NOT NULL
 `~` | Справа, перед `^` | Уникальный
 `^`_arg1,arg2,...argN_ | Справа, самый последний | Параметры типа Sequelize, например для STRING(arg1)
 
@@ -143,7 +142,7 @@ Sequelize в таблицу автоматически добавляет пол
 ```
 ```javascript
 {
-    '#': {  
+    '#': {
         timestamps: false
     },
     '<user@employee=employee_id': {
@@ -157,8 +156,8 @@ Sequelize в таблицу автоматически добавляет пол
 
 В инстанс модели добавлены следующие методы:
 * `async mtmAdd(tableOrAsName, oppositeModelInstance)`, `async mtmAdd(tableOrAsName, [oppositeModelInstance])` - Добавить элемент или элементы в таблицу связи
-* `async mtmRemove(tableOrAsName, oppositeModelInstance)`, `async mtmRemove(tableOrAsName, [oppositeModelInstance])` - Удалить элемент или элементы из таблицы связи   
-* `async mtmGet(tableOrAsName)` - Получить элементы связи 
+* `async mtmRemove(tableOrAsName, oppositeModelInstance)`, `async mtmRemove(tableOrAsName, [oppositeModelInstance])` - Удалить элемент или элементы из таблицы связи
+* `async mtmGet(tableOrAsName)` - Получить элементы связи
 
 Пример использования:
 ```javascript
@@ -169,7 +168,7 @@ Sequelize в таблицу автоматически добавляет пол
     },
     items: {
         name: 'string'
-    }    
+    }
 }
 ```
 ```javascript

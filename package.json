@@ -1,18 +1,28 @@
 {
-	"name"        : "osmium-db",
-	"description" : "Osmium DB",
-	"license"     : "MIT",
-	"author"      : "Vasiliy Isaichkin <vasiliy@isaichkin.ru>",
-	"repository"  : "https://github.com/VasiliyIsaichkin/osmium-db",
-	"version"     : "0.5.0",
+	"name": "@osmium/db",
+	"description": "Osmium DB library",
+	"version": "0.4.0",
+	"license": "MIT",
+	"author": {
+		"name": "Vasiliy Isaichkin",
+		"email": "vasiliy@isaichkin.ru"
+	},
+	"repository": "https://github.com/osmiumjs/api-transport-browser",
+	"main": "./index.js",
 	"dependencies": {
-		"bignumber.js"     : "^9.0.0",
-		"lodash"           : "^4.17.15",
-		"osmium-tools"     : "^0.2.11",
-		"pg"               : "^7.12.1",
-		"pg-hstore"        : "^2.3.3",
-		"sequelize"        : "^5.19.1",
-		"sugar"            : "^2.0.6",
+		"@osmium/crypt": "~0.4.0",
+		"@osmium/tools": "~0.4.1",
+		"bignumber.js": "~9.0.1",
+		"lodash": "^4.17.21",
+		"mz": "^2.7.0",
+		"pg": "~8.6.0",
+		"pg-hstore": "~2.3.4",
+		"sequelize": "~6.6.5",
+		"sugar": "^2.0.6",
 		"sugar-inflections": "^2.0.6"
+	},
+	"devDependencies": {
+		"@types/mz": "^2.7.4",
+		"@types/sugar": "^2.0.2"
 	}
 }
