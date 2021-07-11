@@ -7,7 +7,7 @@
 		"name" : "Vasiliy Isaichkin",
 		"email": "vasiliy@isaichkin.ru"
 	},
-	"repository"     : "https://github.com/osmiumjs/api-transport-browser",
+	"repository"     : "https://github.com/osmiumjs/db",
 	"main"           : "./index.js",
 	"dependencies"   : {
 		"@osmium/crypt"    : "~0.4.0",
